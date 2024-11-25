@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.pyc
+
+# Archivos sensibles
+.env
+
+# Archivos generados automáticamente
+__pycache__/
+*.pyc
+
+# Configuraciones locales
+.vscode/
