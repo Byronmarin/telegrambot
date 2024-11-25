@@ -1,7 +1,8 @@
 import requests
 import random
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, JobQueue
+import asyncio
 
 # Tu API Key de Pixabay
 PIXABAY_API_KEY = "15904962-7777ccb3e4f3ad4e17d95f4df"
@@ -35,12 +36,26 @@ async def send_random_star_wars_image(update: Update, context: ContextTypes.DEFA
     else:
         await update.message.reply_text("Lo siento, no pude obtener una imagen. Intenta de nuevo más tarde.")
 
+# Función que se ejecutará cada segundo
+async def auto_send_star_wars_image(context: ContextTypes.DEFAULT_TYPE):
+    # Chat ID proporcionado
+    chat_id = 1191192549  # Aquí usamos el chat ID proporcionado
+    image_url = get_random_star_wars_image()
+    if image_url:
+        await context.bot.send_photo(chat_id=chat_id, photo=image_url)
+
+# Configuración del bot
 if __name__ == "__main__":
     # Token de tu bot de Telegram
     app = ApplicationBuilder().token("7486157301:AAGKMaVYQbq1S-HizfhAoTK1BjglysCjCfU").build()
 
     # Agregar el manejador para el comando /starwars
     app.add_handler(CommandHandler("starwars", send_random_star_wars_image))  # Comando /starwars
+
+    # Iniciar el JobQueue para programar la tarea periódica
+    job_queue = JobQueue()
+    job_queue.set_application(app)
+    job_queue.run_repeating(auto_send_star_wars_image, interval=1, first=0)  # Cada segundo
 
     print("Bot corriendo...")
     app.run_polling()
