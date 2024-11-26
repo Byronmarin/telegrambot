@@ -1,8 +1,19 @@
 import requests
 import random
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, JobQueue
-import asyncio
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from flask import Flask
+import threading
+
+# Configuración del servidor Flask
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "El bot está activo."
+
+def run_server():
+    app.run(host='0.0.0.0', port=5000)
 
 # Tu API Key de Pixabay
 PIXABAY_API_KEY = "15904962-7777ccb3e4f3ad4e17d95f4df"
@@ -36,26 +47,18 @@ async def send_random_star_wars_image(update: Update, context: ContextTypes.DEFA
     else:
         await update.message.reply_text("Lo siento, no pude obtener una imagen. Intenta de nuevo más tarde.")
 
-# Función que se ejecutará cada segundo
-async def auto_send_star_wars_image(context: ContextTypes.DEFAULT_TYPE):
-    # Chat ID proporcionado
-    chat_id = 1191192549  # Aquí usamos el chat ID proporcionado
-    image_url = get_random_star_wars_image()
-    if image_url:
-        await context.bot.send_photo(chat_id=chat_id, photo=image_url)
+# Token de tu bot de Telegram
+BOT_TOKEN = "7486157301:AAGKMaVYQbq1S-HizfhAoTK1BjglysCjCfU"
 
-# Configuración del bot
 if __name__ == "__main__":
-    # Token de tu bot de Telegram
-    app = ApplicationBuilder().token("7486157301:AAGKMaVYQbq1S-HizfhAoTK1BjglysCjCfU").build()
+    # Inicia el servidor Flask en un hilo aparte
+    threading.Thread(target=run_server).start()
+
+    # Configuración y ejecución del bot de Telegram
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     # Agregar el manejador para el comando /starwars
     app.add_handler(CommandHandler("starwars", send_random_star_wars_image))  # Comando /starwars
-
-    # Iniciar el JobQueue para programar la tarea periódica
-    job_queue = JobQueue()
-    job_queue.set_application(app)
-    job_queue.run_repeating(auto_send_star_wars_image, interval=1, first=0)  # Cada segundo
 
     print("Bot corriendo...")
     app.run_polling()
